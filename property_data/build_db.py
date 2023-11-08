@@ -63,7 +63,7 @@ def build_database(csv_exists):
     connection = psycopg2.connect(
         host="localhost",
         user="postgres",
-        password="unebarque3",
+        password="PASSWORD",
         database="sf_property_mapping"
     )
 
@@ -85,7 +85,7 @@ def input_sample_geocodes():
     connection = psycopg2.connect(
         host="localhost",
         user="postgres",
-        password="unebarque3",
+        password="PASSWORD",
         database="sf_property_mapping"
     )
     cursor = connection.cursor()
