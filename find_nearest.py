@@ -44,7 +44,7 @@ def find_nearest():
     connection = psycopg2.connect(
         host="localhost",
         user="postgres",
-        password="unebarque3",
+        password="PASSWORD",
         database="sf_property_mapping"
     )
     cursor = connection.cursor()
