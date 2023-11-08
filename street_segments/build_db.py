@@ -4,7 +4,7 @@ import json
 connection = psycopg2.connect(
     host="localhost",
     user="postgres",
-    password="unebarque3",
+    password="PASSWORD",
     database="sf_property_mapping"
 )
 
