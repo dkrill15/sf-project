@@ -1,10 +1,11 @@
 import psycopg2
 import json
+import os
 
 connection = psycopg2.connect(
     host="localhost",
     user="postgres",
-    password="PASSWORD",
+    password=os.getenv("DBPASS", "password"),
     database="sf_property_mapping"
 )
 
@@ -28,9 +29,17 @@ for item in streets:
     for coor in streets[item]['coordinates']:
         lat = coor[0][0]
         lon = coor[0][1]
-        street_data.append(
-            (street_id[0], street_id[1], lat, lon, street_name)
-        )
+
+        if type(street_name) == list:
+            print(f"Breaking down {street_name}")
+            for sn in street_name:
+                street_data.append((street_id[0], street_id[1], lat, lon, sn))
+        else:
+            street_data.append(
+                (street_id[0], street_id[1], lat, lon, street_name)
+            )
+
+
 
 print(len(street_data))
 

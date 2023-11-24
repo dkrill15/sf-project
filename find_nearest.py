@@ -2,6 +2,8 @@ import geopy.distance
 import plotly.express as px
 import math
 import psycopg2
+import os
+from tqdm import tqdm
 
 def haversine(lat1, lon1, lat2, lon2):
     # Convert latitude and longitude from degrees to radians
@@ -35,16 +37,16 @@ def get_nearest_segment(target, locations):
             min_distance = distance
             closest_p, closest_s = location[2], location[3]
 
-    print(min_distance)
+    #print(min_distance)
 
-    return closest_p, closest_s
+    return closest_p, closest_s, min_distance
 
 
 def find_nearest():
     connection = psycopg2.connect(
         host="localhost",
         user="postgres",
-        password="PASSWORD",
+        password=os.getenv("DBPASS", "password"),
         database="sf_property_mapping"
     )
     cursor = connection.cursor()
@@ -55,25 +57,35 @@ def find_nearest():
     """
 
     cursor.execute(select_unique_streets)
-    street_names = [list(x) for x in cursor.fetchall()]
-    with_intersections = len(street_names)
-    street_names = [x[0] for x in street_names if ',' not in x[0]]
-    without_intersections = len(street_names)
-    print(f'{with_intersections-without_intersections} streets are identified as being of two streets')
+    street_names = [x[0] for x in cursor.fetchall()]
+    # with_intersections = len(street_names)
+    # intersections = [x[0] for x in street_names if ',' in x[0]]
+    # print(intersections)
+    # street_names = [x[0] for x in street_names if ',' not in x[0]]
+    # without_intersections = len(street_names)
+    # print(f'{with_intersections-without_intersections} streets are identified as being of two streets')
 
     nearest_info = []
 
-    for street in street_names:
-        og_street = street
-        street = str.upper(" ".join(street.split()[:-1]))
-        print(street)
+    for street in (pbar := tqdm(street_names)):
 
-        if "'" in street:
+        og_street = street
+        if " " in street:
+            street = str.upper(" ".join(street.split()[:-1]))
+        else:
+            street = str.upper(street)
+        print(f'Orignal: {og_street} \t Modified: {street}')
+        
+        pbar.set_postfix_str(street)
+
+        #print(street)
+
+        if "'" in street or "NaN" in og_street:
             continue
 
         # get all lat/lon coord from addresses w street in name
         select_address_coords = f"""
-        SELECT address_id, latitude, longitude, address FROM addresses WHERE address LIKE '%{street}%';
+        SELECT address_id, latitude, longitude, address, distance FROM addresses WHERE address LIKE '%{street}%';
         """
 
         cursor.execute(select_address_coords)
@@ -88,14 +100,17 @@ def find_nearest():
         street_coords = [list(x) for x in cursor.fetchall()]
         # print(street_coords)
 
+        print(f'Found {len(prop_coords)} address and {len(street_coords)} potential coordinates')
+
         for p in prop_coords:
             if p[1] is not None:
-                print(p[3])
-                seg_prim, seg_sec = get_nearest_segment(p, street_coords)
 
-                nearest_info.append((seg_prim, seg_sec, p[0]))
+                seg_prim, seg_sec, min_dist = get_nearest_segment(p, street_coords)
 
-    update_query = "UPDATE addresses SET nearest_street_pri = %s , nearest_street_sec = %s WHERE address_id = %s;"
+                if p[4] == 0 or min_dist < p[4]:
+                    nearest_info.append((seg_prim, seg_sec, min_dist, p[0]))
+
+    update_query = "UPDATE addresses SET nearest_street_pri = %s , nearest_street_sec = %s , distance = %s WHERE address_id = %s;"
 
     cursor.executemany(update_query, nearest_info)
 
