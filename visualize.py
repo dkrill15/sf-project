@@ -73,10 +73,10 @@ def prop_points(connection):
 
 
 def street_points():
-    WEST_END = -122.4276
-    EAST_END = -122.401686
-    NORTH_END = 37.791812
-    SOUTH_END = 37.77075
+    WEST_END = -122.4312
+    EAST_END = -122.402
+    NORTH_END = 37.789
+    SOUTH_END = 37.77
     streets = []
     with open('street_segments/segments.json', 'r') as file:
         streets = json.load(file)
@@ -94,17 +94,33 @@ def street_points():
         'purple'
     ]
     street_locs_list = []
+    street_meds_list = []
     for i, item in enumerate(streets):
 
-        for coor in streets[item]['coordinates']:
+        med_val = len(streets[item]['coordinates']) // 2
+
+        for j, coor in enumerate(streets[item]['coordinates']):
             lat = coor[0][0]
             lon = coor[0][1]
-            if lon >= WEST_END or lon <= EAST_END or lat >= SOUTH_END or lat <= NORTH_END:
-                row = [coor[0][0], coor[0][1], colors[i % 10], streets[item]
+            row = []
+            if (lon >= WEST_END and lon <= EAST_END and lat >= SOUTH_END and lat <= NORTH_END):
+                row = [lat, lon, colors[i % 10], streets[item]
                        ["name"], ",".join([str(x) for x in json.loads(streets[item]["segment_id"])])]
                 street_locs_list.append(row)
 
-    return street_locs_list
+            # if not (lon <= WEST_END and lon >= EAST_END):
+            #      print("out of ew bounds")
+            #      print(
+            #          f'{lat} \t {NORTH_END} \t {SOUTH_END} \t {lon} \t {WEST_END} \t {EAST_END}')
+            # if not (lat >= SOUTH_END and lat <= NORTH_END):
+            #     print("out of ns bounds")
+            #     print(
+            #         f'{lat} \t {NORTH_END} \t {SOUTH_END} \t {lon} \t {WEST_END} \t {EAST_END}')
+            
+            if j == med_val:
+                street_meds_list.append(row)
+
+    return street_locs_list, street_meds_list
 
 
 def make_points(connection):
@@ -113,14 +129,16 @@ def make_points(connection):
 
     print(len(prop_list))
 
-    street_list = street_points()
+    street_list, street_medians = street_points()
 
     og_street_list = [x for x in street_list]
 
-    street_list.extend(prop_list)
+    street_medians.extend(prop_list)
 
-    street_df = pd.DataFrame(street_list, columns=[
+    street_df = pd.DataFrame(street_medians, columns=[
                              'Lat', 'Lon', 'Color', 'Name', 'Ids'])
+    
+
 
     fig = px.scatter_mapbox(street_df,
                             lat="Lat",
@@ -169,6 +187,8 @@ def make_points(connection):
 
 
     fig.show()
+
+    fig.write_html("sf-map.html")
 
 
 def map_nans(connection):

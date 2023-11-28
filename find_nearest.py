@@ -80,7 +80,10 @@ def find_nearest():
 
         #print(street)
 
-        if "'" in street or "NaN" in og_street:
+        # if "'" in street:
+        #     street = street.replace("'", "")
+        #     print(street, og_street)
+        if "NaN" in og_street:
             continue
 
         # get all lat/lon coord from addresses w street in name
@@ -100,7 +103,7 @@ def find_nearest():
         street_coords = [list(x) for x in cursor.fetchall()]
         # print(street_coords)
 
-        print(f'Found {len(prop_coords)} address and {len(street_coords)} potential coordinates')
+        #print(f'Found {len(prop_coords)} address and {len(street_coords)} potential coordinates')
 
         for p in prop_coords:
             if p[1] is not None:
