@@ -2,7 +2,7 @@
 
 ## cv_training
 
-This folder contains code adapted from (this repository)[https://github.com/yoloso/urbanchange]. The two main scripts 1) generate all street segments for a given bounding box and 2) pull Google Street View images from various headings along those segments.
+This folder contains code adapted from [this repository](https://github.com/yoloso/urbanchange). The two main scripts 1) generate all street segments for a given bounding box and 2) pull Google Street View images from various headings along those segments.
 To access GSV API, add a CONFIG.py file in that folder containing the line : `SV_api_key="your-api-key"`
 
 ## street_segments, property_data
